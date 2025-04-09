@@ -145,12 +145,12 @@ func (c *AWSClient) GetRoleLastUsed(ctx context.Context, roleName string) (*time
 // DeleteRole deletes an IAM role
 func (c *AWSClient) DeleteRole(ctx context.Context, roleName string) error {
 	// First detach all policies
-	if err := c.detachRolePolicies(ctx, roleName); err != nil {
+	if err := c.DetachRolePolicies(ctx, roleName); err != nil {
 		return err
 	}
 
 	// Delete all inline policies
-	if err := c.deleteInlinePolicies(ctx, roleName); err != nil {
+	if err := c.DeleteInlinePolicies(ctx, roleName); err != nil {
 		return err
 	}
 
@@ -165,8 +165,8 @@ func (c *AWSClient) DeleteRole(ctx context.Context, roleName string) error {
 	return nil
 }
 
-// detachRolePolicies detaches all managed policies from a role
-func (c *AWSClient) detachRolePolicies(ctx context.Context, roleName string) error {
+// DetachRolePolicies detaches all managed policies from a role
+func (c *AWSClient) DetachRolePolicies(ctx context.Context, roleName string) error {
 	paginator := iam.NewListAttachedRolePoliciesPaginator(c.iamClient, &iam.ListAttachedRolePoliciesInput{
 		RoleName: aws.String(roleName),
 	})
@@ -191,8 +191,8 @@ func (c *AWSClient) detachRolePolicies(ctx context.Context, roleName string) err
 	return nil
 }
 
-// deleteInlinePolicies deletes all inline policies from a role
-func (c *AWSClient) deleteInlinePolicies(ctx context.Context, roleName string) error {
+// DeleteInlinePolicies deletes all inline policies from a role
+func (c *AWSClient) DeleteInlinePolicies(ctx context.Context, roleName string) error {
 	paginator := iam.NewListRolePoliciesPaginator(c.iamClient, &iam.ListRolePoliciesInput{
 		RoleName: aws.String(roleName),
 	})

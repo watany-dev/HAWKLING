@@ -94,6 +94,20 @@ func (m *DelayedMockIAMClient) DeleteRole(ctx context.Context, roleName string) 
 	return nil
 }
 
+// DetachRolePolicies mocks detaching all managed policies from a role
+func (m *DelayedMockIAMClient) DetachRolePolicies(ctx context.Context, roleName string) error {
+	// Simulate API delay
+	time.Sleep(m.APIDelay)
+	return nil
+}
+
+// DeleteInlinePolicies mocks deleting all inline policies from a role
+func (m *DelayedMockIAMClient) DeleteInlinePolicies(ctx context.Context, roleName string) error {
+	// Simulate API delay
+	time.Sleep(m.APIDelay)
+	return nil
+}
+
 // ListAllRolesSequential gets a list of all roles and their last used times sequentially
 func ListAllRolesSequential(ctx context.Context, client aws.IAMClient) ([]aws.Role, error) {
 	// Get all roles

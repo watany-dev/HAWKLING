@@ -7,6 +7,12 @@ import (
 
 // IAMClient defines the interface for AWS IAM operations
 type IAMClient interface {
+	RoleManager
+	PolicyManager
+}
+
+// RoleManager handles IAM role operations
+type RoleManager interface {
 	// ListRoles returns all IAM roles
 	ListRoles(ctx context.Context) ([]Role, error)
 
@@ -15,6 +21,22 @@ type IAMClient interface {
 
 	// DeleteRole deletes an IAM role
 	DeleteRole(ctx context.Context, roleName string) error
+}
+
+// PolicyManager handles IAM policy operations
+type PolicyManager interface {
+	// DetachRolePolicies detaches all managed policies from a role
+	DetachRolePolicies(ctx context.Context, roleName string) error
+
+	// DeleteInlinePolicies deletes all inline policies from a role
+	DeleteInlinePolicies(ctx context.Context, roleName string) error
+}
+
+// Policy represents an AWS IAM policy
+type Policy struct {
+	Name     string
+	Arn      string
+	IsInline bool
 }
 
 // Role represents an AWS IAM role

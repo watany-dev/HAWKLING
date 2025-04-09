@@ -42,8 +42,7 @@ Complete documentation is available at https://github.com/yourusername/hawkling`
 	}
 
 	// Global flags
-	rootCmd.PersistentFlags().StringVar(&profile, "profile", "", "AWS profile to use")
-	rootCmd.PersistentFlags().StringVar(&region, "region", "us-east-1", "AWS region to use")
+	commands.AddCommonFlags(rootCmd, &profile, &region)
 
 	// List command
 	listCmd := &cobra.Command{
@@ -62,11 +61,8 @@ Complete documentation is available at https://github.com/yourusername/hawkling`
 			return listCmd.Execute(context.Background())
 		},
 	}
-	listCmd.Flags().IntVar(&days, "days", 0, "Number of days to consider a role as unused (0 to list all roles)")
-	listCmd.Flags().StringVarP(&output, "output", "o", "table", "Output format (table or json)")
-	listCmd.Flags().BoolVar(&showAllInfo, "all", false, "Show all information including ARN and creation date")
-	listCmd.Flags().BoolVar(&onlyUsed, "used", false, "Show only roles that have been used at least once")
-	listCmd.Flags().BoolVar(&onlyUnused, "unused", false, "Show only roles that have never been used")
+	commands.AddFilterFlags(listCmd, &days, &onlyUsed, &onlyUnused)
+	commands.AddOutputFlags(listCmd, &output, &showAllInfo)
 
 	// Delete command
 	deleteCmd := &cobra.Command{
@@ -84,8 +80,7 @@ Complete documentation is available at https://github.com/yourusername/hawkling`
 			return deleteCmd.Execute(context.Background())
 		},
 	}
-	deleteCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Simulate deletion without actually deleting")
-	deleteCmd.Flags().BoolVar(&force, "force", false, "Delete without confirmation")
+	commands.AddDeletionFlags(deleteCmd, &dryRun, &force)
 
 	// Prune command
 	pruneCmd := &cobra.Command{
@@ -102,9 +97,7 @@ Complete documentation is available at https://github.com/yourusername/hawkling`
 			return pruneCmd.Execute(context.Background())
 		},
 	}
-	pruneCmd.Flags().IntVar(&days, "days", 90, "Number of days to consider a role as unused")
-	pruneCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Simulate deletion without actually deleting")
-	pruneCmd.Flags().BoolVar(&force, "force", false, "Delete without confirmation")
+	commands.AddPruneFlags(pruneCmd, &days, &dryRun, &force)
 
 	// Demo command
 	demoCmd := &cobra.Command{
