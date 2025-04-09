@@ -44,7 +44,7 @@ func TestTruncateString(t *testing.T) {
 func TestFormatRolesAsJSON(t *testing.T) {
 	now := time.Now()
 	lastUsed := now.Add(-24 * time.Hour)
-	
+
 	roles := []aws.Role{
 		{
 			Name:        "Role1",

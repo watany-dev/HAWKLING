@@ -16,7 +16,7 @@ type Format string
 const (
 	// TableFormat outputs data in a tabular format
 	TableFormat Format = "table"
-	
+
 	// JSONFormat outputs data in JSON format
 	JSONFormat Format = "json"
 )
@@ -37,13 +37,13 @@ func FormatRoles(roles []aws.Role, format Format) error {
 func formatRolesAsTable(roles []aws.Role) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(w, "NAME\tARN\tCREATED\tLAST USED\tDESCRIPTION")
-	
+
 	for _, role := range roles {
 		lastUsed := "Never"
 		if role.LastUsed != nil {
 			lastUsed = role.LastUsed.Format(time.RFC3339)
 		}
-		
+
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
 			role.Name,
 			role.Arn,
@@ -52,7 +52,7 @@ func formatRolesAsTable(roles []aws.Role) error {
 			TruncateString(role.Description, 50),
 		)
 	}
-	
+
 	return w.Flush()
 }
 
@@ -62,7 +62,7 @@ func FormatRolesAsJSON(roles []aws.Role) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal roles to JSON: %w", err)
 	}
-	
+
 	fmt.Println(string(data))
 	return nil
 }
@@ -72,6 +72,6 @@ func TruncateString(s string, length int) string {
 	if len(s) <= length {
 		return s
 	}
-	
+
 	return s[:length-3] + "..."
 }

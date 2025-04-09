@@ -53,15 +53,15 @@ func (c *AWSClient) ListRoles(ctx context.Context) ([]Role, error) {
 
 		for _, r := range output.Roles {
 			role := Role{
-				Name:        *r.RoleName,
-				Arn:         *r.Arn,
-				CreateDate:  *r.CreateDate,
+				Name:       *r.RoleName,
+				Arn:        *r.Arn,
+				CreateDate: *r.CreateDate,
 			}
-			
+
 			if r.Description != nil {
 				role.Description = *r.Description
 			}
-			
+
 			// We'll get last used info separately
 			roles = append(roles, role)
 		}
@@ -101,7 +101,7 @@ func (c *AWSClient) DeleteRole(ctx context.Context, roleName string) error {
 	if err := c.detachRolePolicies(ctx, roleName); err != nil {
 		return err
 	}
-	
+
 	// Delete all inline policies
 	if err := c.deleteInlinePolicies(ctx, roleName); err != nil {
 		return err

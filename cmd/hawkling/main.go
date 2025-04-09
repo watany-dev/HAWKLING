@@ -11,12 +11,12 @@ import (
 )
 
 var (
-	profile  string
-	region   string
-	days     int
-	dryRun   bool
-	force    bool
-	output   string
+	profile string
+	region  string
+	days    int
+	dryRun  bool
+	force   bool
+	output  string
 )
 
 func main() {
@@ -35,19 +35,11 @@ Complete documentation is available at https://github.com/yourusername/hawkling`
 	// List command
 	listCmd := &cobra.Command{
 		Use:   "list",
-		Short: "List all IAM roles",
+		Short: "List IAM roles, optionally filtering for unused roles",
 		RunE:  listRoles,
 	}
+	listCmd.Flags().IntVar(&days, "days", 0, "Number of days to consider a role as unused (0 to list all roles)")
 	listCmd.Flags().StringVarP(&output, "output", "o", "table", "Output format (table or json)")
-
-	// Unused command
-	unusedCmd := &cobra.Command{
-		Use:   "unused",
-		Short: "Find unused IAM roles",
-		RunE:  unusedRoles,
-	}
-	unusedCmd.Flags().IntVar(&days, "days", 90, "Number of days to consider a role as unused")
-	unusedCmd.Flags().StringVarP(&output, "output", "o", "table", "Output format (table or json)")
 
 	// Delete command
 	deleteCmd := &cobra.Command{
@@ -69,7 +61,7 @@ Complete documentation is available at https://github.com/yourusername/hawkling`
 	pruneCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Simulate deletion without actually deleting")
 	pruneCmd.Flags().BoolVar(&force, "force", false, "Delete without confirmation")
 
-	rootCmd.AddCommand(listCmd, unusedCmd, deleteCmd, pruneCmd)
+	rootCmd.AddCommand(listCmd, deleteCmd, pruneCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
@@ -96,39 +88,23 @@ func listRoles(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to list roles: %w", err)
 	}
 
+	// Filter roles if days flag is provided (>0)
+	if days > 0 {
+		var unusedRoles []aws.Role
+		for _, role := range roles {
+			if role.IsUnused(days) {
+				unusedRoles = append(unusedRoles, role)
+			}
+		}
+		roles = unusedRoles
+	}
+
 	format := formatter.TableFormat
 	if output == "json" {
 		format = formatter.JSONFormat
 	}
 
 	return formatter.FormatRoles(roles, format)
-}
-
-func unusedRoles(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-	client, err := createClient(ctx)
-	if err != nil {
-		return err
-	}
-
-	roles, err := client.ListRoles(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to list roles: %w", err)
-	}
-
-	var unusedRoles []aws.Role
-	for _, role := range roles {
-		if role.IsUnused(days) {
-			unusedRoles = append(unusedRoles, role)
-		}
-	}
-
-	format := formatter.TableFormat
-	if output == "json" {
-		format = formatter.JSONFormat
-	}
-
-	return formatter.FormatRoles(unusedRoles, format)
 }
 
 func deleteRole(cmd *cobra.Command, args []string) error {
@@ -147,8 +123,8 @@ func deleteRole(cmd *cobra.Command, args []string) error {
 	if !force {
 		fmt.Printf("Are you sure you want to delete role %s? [y/N]: ", roleName)
 		var response string
-		fmt.Scanln(&response)
-		if response != "y" && response != "Y" {
+		_, err := fmt.Scanln(&response)
+		if err != nil || (response != "y" && response != "Y") {
 			fmt.Println("Operation cancelled")
 			return nil
 		}
@@ -199,8 +175,8 @@ func pruneRoles(cmd *cobra.Command, args []string) error {
 	if !force {
 		fmt.Print("Do you want to delete these roles? [y/N]: ")
 		var response string
-		fmt.Scanln(&response)
-		if response != "y" && response != "Y" {
+		_, err := fmt.Scanln(&response)
+		if err != nil || (response != "y" && response != "Y") {
 			fmt.Println("Operation cancelled")
 			return nil
 		}

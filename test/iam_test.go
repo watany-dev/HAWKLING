@@ -9,7 +9,7 @@ import (
 
 func TestRoleIsUnused(t *testing.T) {
 	now := time.Now()
-	
+
 	tests := []struct {
 		name     string
 		lastUsed *time.Time
@@ -48,9 +48,9 @@ func TestRoleIsUnused(t *testing.T) {
 				Name:     "TestRole",
 				LastUsed: test.lastUsed,
 			}
-			
+
 			result := role.IsUnused(test.days)
-			
+
 			if result != test.expected {
 				t.Errorf("expected %v, got %v", test.expected, result)
 			}
@@ -58,7 +58,4 @@ func TestRoleIsUnused(t *testing.T) {
 	}
 }
 
-// Helper function to create a time pointer
-func timePtr(t time.Time) *time.Time {
-	return &t
-}
+// Use timePtr from mock_iamclient.go
