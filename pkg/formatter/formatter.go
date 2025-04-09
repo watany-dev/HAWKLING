@@ -7,7 +7,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"mejiro/pkg/aws"
+	"hawkling/pkg/aws"
 )
 
 // Format represents the output format

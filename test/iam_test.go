@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"mejiro/pkg/aws"
+	"hawkling/pkg/aws"
 )
 
 func TestRoleIsUnused(t *testing.T) {

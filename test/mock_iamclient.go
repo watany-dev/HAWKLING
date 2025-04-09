@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"mejiro/pkg/aws"
+	"hawkling/pkg/aws"
 )
 
 // Helper function to create a time pointer

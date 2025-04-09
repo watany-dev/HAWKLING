@@ -1,6 +1,6 @@
-# Mejiro
+# Hawkling
 
-Mejiro is a command-line tool for managing AWS IAM roles, with a focus on identifying and cleaning up unused roles. It provides functionality for listing all IAM roles, detecting unused roles, and safely deleting them either individually or in bulk.
+Hawkling is a command-line tool for managing AWS IAM roles, with a focus on identifying and cleaning up unused roles. It provides functionality for listing all IAM roles, detecting unused roles, and safely deleting them either individually or in bulk.
 
 ## Features
 
@@ -15,20 +15,20 @@ Mejiro is a command-line tool for managing AWS IAM roles, with a focus on identi
 ### Using Go
 
 ```bash
-go install github.com/yourusername/mejiro/cmd/mejiro@latest
+go install github.com/yourusername/hawkling/cmd/hawkling@latest
 ```
 
 ### From Source
 
 ```bash
-git clone https://github.com/yourusername/mejiro.git
-cd mejiro
-go build -o mejiro ./cmd/mejiro
+git clone https://github.com/yourusername/hawkling.git
+cd hawkling
+go build -o hawkling ./cmd/hawkling
 ```
 
 ## Usage
 
-Mejiro offers several commands with various options:
+Hawkling offers several commands with various options:
 
 ### Global Options
 
@@ -40,7 +40,7 @@ Mejiro offers several commands with various options:
 #### List all IAM roles
 
 ```bash
-mejiro list -o table --profile myprofile --region us-east-1
+hawkling list -o table --profile myprofile --region us-east-1
 ```
 
 Options:
@@ -49,7 +49,7 @@ Options:
 #### Find unused IAM roles
 
 ```bash
-mejiro unused --days 90
+hawkling unused --days 90
 ```
 
 Options:
@@ -59,7 +59,7 @@ Options:
 #### Delete a specific role
 
 ```bash
-mejiro delete MyUnusedRole --dry-run
+hawkling delete MyUnusedRole --dry-run
 ```
 
 Options:
@@ -69,8 +69,8 @@ Options:
 #### Prune (bulk delete) unused roles
 
 ```bash
-mejiro prune --days 90
-mejiro prune --days 90 --force
+hawkling prune --days 90
+hawkling prune --days 90 --force
 ```
 
 Options:
@@ -83,36 +83,36 @@ Options:
 ### List all roles in a specific AWS account
 
 ```bash
-mejiro list --profile production
+hawkling list --profile production
 ```
 
 ### Find roles not used in the last 180 days
 
 ```bash
-mejiro unused --days 180
+hawkling unused --days 180
 ```
 
 ### Delete an unused role (with confirmation)
 
 ```bash
-mejiro delete OldServiceRole
+hawkling delete OldServiceRole
 ```
 
 ### Delete an unused role (without confirmation)
 
 ```bash
-mejiro delete OldServiceRole --force
+hawkling delete OldServiceRole --force
 ```
 
 ### Prune all roles not used in the last 30 days (dry run mode)
 
 ```bash
-mejiro prune --days 30 --dry-run
+hawkling prune --days 30 --dry-run
 ```
 
 ## Security Considerations
 
-Mejiro requires IAM permissions to list and delete roles. It's recommended to use it with an IAM user or role that has appropriate permissions:
+Hawkling requires IAM permissions to list and delete roles. It's recommended to use it with an IAM user or role that has appropriate permissions:
 
 ```json
 {
@@ -145,7 +145,7 @@ Mejiro requires IAM permissions to list and delete roles. It's recommended to us
 ### Building from source
 
 ```bash
-go build -o mejiro ./cmd/mejiro
+go build -o hawkling ./cmd/hawkling
 ```
 
 ### Running tests

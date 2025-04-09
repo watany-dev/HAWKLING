@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"mejiro/pkg/aws"
-	"mejiro/pkg/formatter"
+	"hawkling/pkg/aws"
+	"hawkling/pkg/formatter"
 )
 
 var (
@@ -21,10 +21,10 @@ var (
 
 func main() {
 	rootCmd := &cobra.Command{
-		Use:   "mejiro",
-		Short: "Mejiro is a tool for managing AWS IAM roles",
+		Use:   "hawkling",
+		Short: "Hawkling is a tool for managing AWS IAM roles",
 		Long: `A CLI tool for listing, detecting unused, and cleaning up AWS IAM roles.
-Complete documentation is available at https://github.com/yourusername/mejiro`,
+Complete documentation is available at https://github.com/yourusername/hawkling`,
 		SilenceUsage: true,
 	}
 

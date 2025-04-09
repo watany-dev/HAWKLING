@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"mejiro/pkg/aws"
-	"mejiro/pkg/formatter"
+	"hawkling/pkg/aws"
+	"hawkling/pkg/formatter"
 )
 
 func TestTruncateString(t *testing.T) {

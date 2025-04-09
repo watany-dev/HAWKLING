@@ -1,4 +1,4 @@
-module mejiro
+module hawkling
 
 go 1.24.1
 
