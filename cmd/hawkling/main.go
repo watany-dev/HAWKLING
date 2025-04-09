@@ -126,38 +126,18 @@ func listRoles(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to list roles: %w", err)
 	}
 
-	// Filter roles if days flag is provided (>0)
-	if days > 0 {
-		var unusedRoles []aws.Role
-		for _, role := range roles {
-			if role.IsUnused(days) {
-				unusedRoles = append(unusedRoles, role)
-			}
+	// Filter roles with a single pass through the data
+	filteredRoles := make([]aws.Role, 0, len(roles))
+	for _, role := range roles {
+		// Skip roles that don't match our filter criteria
+		if (days > 0 && !role.IsUnused(days)) ||
+			(onlyUsed && role.LastUsed == nil) ||
+			(onlyUnused && role.LastUsed != nil) {
+			continue
 		}
-		roles = unusedRoles
+		filteredRoles = append(filteredRoles, role)
 	}
-
-	// Filter for only used roles if --used flag is provided
-	if onlyUsed {
-		var usedRoles []aws.Role
-		for _, role := range roles {
-			if role.LastUsed != nil {
-				usedRoles = append(usedRoles, role)
-			}
-		}
-		roles = usedRoles
-	}
-
-	// Filter for only never used roles if --unused flag is provided
-	if onlyUnused {
-		var neverUsedRoles []aws.Role
-		for _, role := range roles {
-			if role.LastUsed == nil {
-				neverUsedRoles = append(neverUsedRoles, role)
-			}
-		}
-		roles = neverUsedRoles
-	}
+	roles = filteredRoles
 
 	var format formatter.Format
 	switch output {
@@ -213,7 +193,7 @@ func pruneRoles(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to list roles: %w", err)
 	}
 
-	var unusedRoles []aws.Role
+	unusedRoles := make([]aws.Role, 0, len(roles))
 	for _, role := range roles {
 		if role.IsUnused(days) {
 			unusedRoles = append(unusedRoles, role)

@@ -20,11 +20,14 @@ GOTIDY = $(GOMOD) tidy
 
 all: tidy fmt vet lint test build
 
-build: build-hawkling
+build: build-release
 
-build-hawkling:
-	mkdir -p $(BUILD_DIR)
-	$(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME_HAWKLING) ./$(CMD_DIR)/hawkling
+build-dev:
+	go build -o build/hawkling-dev ./cmd/hawkling
+
+# リリースビルド（サイズ最適化）
+build-release:
+	CGO_ENABLED=0 go build -ldflags="-s -w" -o build/hawkling ./cmd/hawkling
 
 clean:
 	rm -rf $(BUILD_DIR)

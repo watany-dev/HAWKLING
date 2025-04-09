@@ -71,13 +71,13 @@ func formatRolesAsTable(roles []aws.Role, showAllInfo bool) error {
 
 // FormatRolesAsJSON prints roles in JSON format
 func FormatRolesAsJSON(roles []aws.Role) error {
-	data, err := json.MarshalIndent(roles, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal roles to JSON: %w", err)
-	}
+	// Create an encoder that writes directly to stdout to avoid allocating
+	// a large string in memory for the entire JSON output
+	encoder := json.NewEncoder(os.Stdout)
+	encoder.SetIndent("", "  ")
+	encoder.SetEscapeHTML(false)
 
-	fmt.Println(string(data))
-	return nil
+	return encoder.Encode(roles)
 }
 
 // TruncateString truncates a string if it's longer than the specified length

@@ -96,12 +96,31 @@ func (c *AWSClient) ListRoles(ctx context.Context) ([]Role, error) {
 	}
 
 	// Collect results
-	for i := 0; i < len(roles); i++ {
-		result := <-results
-		if result.err != nil {
-			return nil, result.err
+	errorChan := make(chan error, 1)
+	done := make(chan struct{})
+
+	go func() {
+		for i := 0; i < len(roles); i++ {
+			result := <-results
+			if result.err != nil {
+				select {
+				case errorChan <- result.err:
+					// Error sent
+				default:
+					// Another error was already sent, ignore this one
+				}
+				continue
+			}
+			roles[result.index].LastUsed = result.lastUsed
 		}
-		roles[result.index].LastUsed = result.lastUsed
+		close(done)
+	}()
+
+	select {
+	case err := <-errorChan:
+		return nil, err
+	case <-done:
+		// All results processed successfully
 	}
 
 	return roles, nil
