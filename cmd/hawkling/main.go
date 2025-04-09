@@ -19,6 +19,7 @@ var (
 	output      string
 	showAllInfo bool
 	onlyUsed    bool
+	onlyUnused  bool
 )
 
 func main() {
@@ -59,6 +60,7 @@ Complete documentation is available at https://github.com/yourusername/hawkling`
 	listCmd.Flags().StringVarP(&output, "output", "o", "table", "Output format (table or json)")
 	listCmd.Flags().BoolVar(&showAllInfo, "all", false, "Show all information including ARN and creation date")
 	listCmd.Flags().BoolVar(&onlyUsed, "used", false, "Show only roles that have been used at least once")
+	listCmd.Flags().BoolVar(&onlyUnused, "unused", false, "Show only roles that have never been used")
 
 	// Delete command
 	deleteCmd := &cobra.Command{
@@ -109,6 +111,16 @@ func listRoles(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Check for conflicting options
+	if onlyUsed && onlyUnused {
+		return fmt.Errorf("--used and --unused flags cannot be used together")
+	}
+
+	// Only validate if days flag was actually specified by user
+	if onlyUnused && cmd.Flags().Changed("days") {
+		return fmt.Errorf("--unused and --days flags cannot be used together")
+	}
+
 	roles, err := client.ListRoles(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to list roles: %w", err)
@@ -125,7 +137,7 @@ func listRoles(cmd *cobra.Command, args []string) error {
 		roles = unusedRoles
 	}
 
-	// Filter out never used roles if --used flag is provided
+	// Filter for only used roles if --used flag is provided
 	if onlyUsed {
 		var usedRoles []aws.Role
 		for _, role := range roles {
@@ -134,6 +146,17 @@ func listRoles(cmd *cobra.Command, args []string) error {
 			}
 		}
 		roles = usedRoles
+	}
+
+	// Filter for only never used roles if --unused flag is provided
+	if onlyUnused {
+		var neverUsedRoles []aws.Role
+		for _, role := range roles {
+			if role.LastUsed == nil {
+				neverUsedRoles = append(neverUsedRoles, role)
+			}
+		}
+		roles = neverUsedRoles
 	}
 
 	var format formatter.Format

@@ -6,6 +6,7 @@ Hawkling is a command-line tool for managing AWS IAM roles, with a focus on iden
 
 - List all IAM roles in your AWS account
 - Identify roles that haven't been used for a specified period
+- Filter to show only used roles
 - Safely delete individual roles with confirmation prompts
 - Bulk delete unused roles with optional dry-run mode
 - Support for different output formats (table or JSON)
@@ -37,25 +38,17 @@ Hawkling offers several commands with various options:
 
 ### Commands
 
-#### List all IAM roles
+#### List IAM roles
 
 ```bash
-hawkling list -o table --profile myprofile --region us-east-1
+hawkling list --profile myprofile --region us-east-1
 ```
 
 Options:
-- `-o, --output` - Output format: `table`, `json`, or `numbered` (default: table)
-- `--all` - Show detailed information including ARN and creation date
-
-#### Find unused IAM roles
-
-```bash
-hawkling unused --days 90
-```
-
-Options:
-- `--days` - Number of days to consider a role as unused (default: 90)
 - `-o, --output` - Output format: `table` or `json` (default: table)
+- `--all` - Show detailed information including ARN and creation date
+- `--used` - Show only roles that have been used at least once
+- `--days` - Number of days to consider a role as unused (0 to list all roles)
 
 #### Delete a specific role
 
@@ -93,31 +86,23 @@ hawkling list --profile production
 hawkling list --all
 ```
 
-### List all roles as a numbered list
+### List only roles that have been used
 
 ```bash
-hawkling list -o numbered
+hawkling list --used
+```
+
+### List all roles in JSON format
+
+```bash
+hawkling list --output json
 ```
 
 ### Find roles not used in the last 180 days
 
 ```bash
-hawkling unused --days 180
+hawkling list --days 180
 ```
-
-### Run the output format demo
-
-To see a demonstration of different output formats:
-
-```bash
-hawkling demo
-```
-
-This will show examples of:
-- Table format (default view)
-- Table format with --all flag
-- Numbered list format
-- Numbered list format with --all flag
 
 ### Delete an unused role (with confirmation)
 
