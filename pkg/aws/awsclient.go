@@ -67,13 +67,41 @@ func (c *AWSClient) ListRoles(ctx context.Context) ([]Role, error) {
 		}
 	}
 
-	// Fetch last used info for each role
+	// Concurrently fetch last used info for each role
+	type roleResult struct {
+		index    int
+		lastUsed *time.Time
+		err      error
+	}
+
+	// Use a semaphore to limit concurrency
+	const maxConcurrency = 10
+	sem := make(chan struct{}, maxConcurrency)
+	results := make(chan roleResult, len(roles))
+
 	for i := range roles {
-		lastUsed, err := c.GetRoleLastUsed(ctx, roles[i].Name)
-		if err != nil {
-			return nil, err
+		go func(i int) {
+			sem <- struct{}{} // Acquire semaphore
+			defer func() {
+				<-sem // Release semaphore
+			}()
+
+			lastUsed, err := c.GetRoleLastUsed(ctx, roles[i].Name)
+			results <- roleResult{
+				index:    i,
+				lastUsed: lastUsed,
+				err:      err,
+			}
+		}(i)
+	}
+
+	// Collect results
+	for i := 0; i < len(roles); i++ {
+		result := <-results
+		if result.err != nil {
+			return nil, result.err
 		}
-		roles[i].LastUsed = lastUsed
+		roles[result.index].LastUsed = result.lastUsed
 	}
 
 	return roles, nil
