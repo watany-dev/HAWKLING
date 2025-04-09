@@ -11,15 +11,32 @@ import (
 )
 
 var (
-	profile string
-	region  string
-	days    int
-	dryRun  bool
-	force   bool
-	output  string
+	profile     string
+	region      string
+	days        int
+	dryRun      bool
+	force       bool
+	output      string
+	showAllInfo bool
+	onlyUsed    bool
 )
 
 func main() {
+	// Check if demo mode is requested
+	if len(os.Args) > 1 && os.Args[1] == "demo" {
+		Demo()
+		return
+	}
+
+	// Normal CLI execution
+	rootCmd := createRootCommand()
+	if err := rootCmd.Execute(); err != nil {
+		os.Exit(1)
+	}
+}
+
+// createRootCommand sets up the command structure
+func createRootCommand() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "hawkling",
 		Short: "Hawkling is a tool for managing AWS IAM roles",
@@ -40,6 +57,8 @@ Complete documentation is available at https://github.com/yourusername/hawkling`
 	}
 	listCmd.Flags().IntVar(&days, "days", 0, "Number of days to consider a role as unused (0 to list all roles)")
 	listCmd.Flags().StringVarP(&output, "output", "o", "table", "Output format (table or json)")
+	listCmd.Flags().BoolVar(&showAllInfo, "all", false, "Show all information including ARN and creation date")
+	listCmd.Flags().BoolVar(&onlyUsed, "used", false, "Show only roles that have been used at least once")
 
 	// Delete command
 	deleteCmd := &cobra.Command{
@@ -61,11 +80,18 @@ Complete documentation is available at https://github.com/yourusername/hawkling`
 	pruneCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Simulate deletion without actually deleting")
 	pruneCmd.Flags().BoolVar(&force, "force", false, "Delete without confirmation")
 
-	rootCmd.AddCommand(listCmd, deleteCmd, pruneCmd)
-
-	if err := rootCmd.Execute(); err != nil {
-		os.Exit(1)
+	// Demo command
+	demoCmd := &cobra.Command{
+		Use:   "demo",
+		Short: "Run a demonstration of output formats",
+		Run: func(cmd *cobra.Command, args []string) {
+			Demo()
+		},
 	}
+
+	rootCmd.AddCommand(listCmd, deleteCmd, pruneCmd, demoCmd)
+
+	return rootCmd
 }
 
 func createClient(ctx context.Context) (aws.IAMClient, error) {
@@ -99,12 +125,26 @@ func listRoles(cmd *cobra.Command, args []string) error {
 		roles = unusedRoles
 	}
 
-	format := formatter.TableFormat
-	if output == "json" {
-		format = formatter.JSONFormat
+	// Filter out never used roles if --used flag is provided
+	if onlyUsed {
+		var usedRoles []aws.Role
+		for _, role := range roles {
+			if role.LastUsed != nil {
+				usedRoles = append(usedRoles, role)
+			}
+		}
+		roles = usedRoles
 	}
 
-	return formatter.FormatRoles(roles, format)
+	var format formatter.Format
+	switch output {
+	case "json":
+		format = formatter.JSONFormat
+	default:
+		format = formatter.TableFormat
+	}
+
+	return formatter.FormatRoles(roles, format, showAllInfo)
 }
 
 func deleteRole(cmd *cobra.Command, args []string) error {

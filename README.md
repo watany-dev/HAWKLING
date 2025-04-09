@@ -44,7 +44,8 @@ hawkling list -o table --profile myprofile --region us-east-1
 ```
 
 Options:
-- `-o, --output` - Output format: `table` or `json` (default: table)
+- `-o, --output` - Output format: `table`, `json`, or `numbered` (default: table)
+- `--all` - Show detailed information including ARN and creation date
 
 #### Find unused IAM roles
 
@@ -86,11 +87,37 @@ Options:
 hawkling list --profile production
 ```
 
+### List all roles with detailed information
+
+```bash
+hawkling list --all
+```
+
+### List all roles as a numbered list
+
+```bash
+hawkling list -o numbered
+```
+
 ### Find roles not used in the last 180 days
 
 ```bash
 hawkling unused --days 180
 ```
+
+### Run the output format demo
+
+To see a demonstration of different output formats:
+
+```bash
+hawkling demo
+```
+
+This will show examples of:
+- Table format (default view)
+- Table format with --all flag
+- Numbered list format
+- Numbered list format with --all flag
 
 ### Delete an unused role (with confirmation)
 

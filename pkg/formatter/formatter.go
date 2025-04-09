@@ -22,10 +22,10 @@ const (
 )
 
 // FormatRoles formats the roles according to the specified format
-func FormatRoles(roles []aws.Role, format Format) error {
+func FormatRoles(roles []aws.Role, format Format, showAllInfo bool) error {
 	switch format {
 	case TableFormat:
-		return formatRolesAsTable(roles)
+		return formatRolesAsTable(roles, showAllInfo)
 	case JSONFormat:
 		return FormatRolesAsJSON(roles)
 	default:
@@ -34,9 +34,14 @@ func FormatRoles(roles []aws.Role, format Format) error {
 }
 
 // formatRolesAsTable prints roles in tabular format
-func formatRolesAsTable(roles []aws.Role) error {
+func formatRolesAsTable(roles []aws.Role, showAllInfo bool) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "NAME\tARN\tCREATED\tLAST USED\tDESCRIPTION")
+
+	if showAllInfo {
+		fmt.Fprintln(w, "NAME\tARN\tCREATED\tLAST USED\tDESCRIPTION")
+	} else {
+		fmt.Fprintln(w, "NAME\tLAST USED\tDESCRIPTION")
+	}
 
 	for _, role := range roles {
 		lastUsed := "Never"
@@ -44,13 +49,21 @@ func formatRolesAsTable(roles []aws.Role) error {
 			lastUsed = role.LastUsed.Format(time.RFC3339)
 		}
 
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
-			role.Name,
-			role.Arn,
-			role.CreateDate.Format(time.RFC3339),
-			lastUsed,
-			TruncateString(role.Description, 50),
-		)
+		if showAllInfo {
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+				role.Name,
+				role.Arn,
+				role.CreateDate.Format(time.RFC3339),
+				lastUsed,
+				TruncateString(role.Description, 50),
+			)
+		} else {
+			fmt.Fprintf(w, "%s\t%s\t%s\n",
+				role.Name,
+				lastUsed,
+				TruncateString(role.Description, 50),
+			)
+		}
 	}
 
 	return w.Flush()
