@@ -36,7 +36,7 @@ func createRootCommand() *cobra.Command {
 		Use:   "hawkling",
 		Short: "Hawkling is a tool for managing AWS IAM roles",
 		Long: `A CLI tool for listing, detecting unused, and cleaning up AWS IAM roles.
-Complete documentation is available at https://github.com/yourusername/hawkling`,
+Complete documentation is available at https://github.com/watany-dev/hawkling`,
 		SilenceUsage: true,
 	}
 
