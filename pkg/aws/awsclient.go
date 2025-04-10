@@ -98,7 +98,7 @@ func (c *AWSClient) ListRoles(ctx context.Context) ([]Role, error) {
 	}
 
 	// Define our channels
-	const maxConcurrency = 10
+	const maxConcurrency = 55
 	jobs := make(chan int, len(roles))
 	results := make(chan roleResult, len(roles))
 
