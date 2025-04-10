@@ -100,17 +100,5 @@ Complete documentation is available at https://github.com/yourusername/hawkling`
 	}
 	commands.AddPruneFlags(pruneCmd, &pruneDays, &dryRun, &force)
 
-	// Demo command
-	demoCmd := &cobra.Command{
-		Use:   "demo",
-		Short: "Run a demonstration of output formats",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			demoCmd := commands.NewDemoCommand()
-			return demoCmd.Execute(context.Background())
-		},
-	}
-
-	rootCmd.AddCommand(listCmd, deleteCmd, pruneCmd, demoCmd)
-
 	return rootCmd
 }
