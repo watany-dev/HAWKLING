@@ -27,5 +27,3 @@ go.work.sum
 # tmp
 hawkling
 issue.txt
-
-build/
