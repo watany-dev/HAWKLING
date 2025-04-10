@@ -3,11 +3,14 @@ package aws
 import (
 	"context"
 	"fmt"
+	"os"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
+	"github.com/schollz/progressbar/v3"
 )
 
 // AWSclient implements the IAMClient interface
@@ -42,8 +45,10 @@ func NewAWSClient(ctx context.Context, profile, region string) (*AWSClient, erro
 
 // ListRoles returns all IAM roles
 func (c *AWSClient) ListRoles(ctx context.Context) ([]Role, error) {
-	var roles []Role
+	// Pre-allocate roles slice to reduce allocations
+	roles := make([]Role, 0, 100) // Start with a reasonable capacity
 
+	// Get all roles
 	paginator := iam.NewListRolesPaginator(c.iamClient, &iam.ListRolesInput{})
 	for paginator.HasMorePages() {
 		output, err := paginator.NextPage(ctx)
@@ -51,6 +56,7 @@ func (c *AWSClient) ListRoles(ctx context.Context) ([]Role, error) {
 			return nil, fmt.Errorf("failed to list roles: %w", err)
 		}
 
+		// Convert the AWS roles to our Role type
 		for _, r := range output.Roles {
 			role := Role{
 				Name:       *r.RoleName,
@@ -67,62 +73,106 @@ func (c *AWSClient) ListRoles(ctx context.Context) ([]Role, error) {
 		}
 	}
 
-	// Concurrently fetch last used info for each role
+	// Create progress bar
+	bar := progressbar.NewOptions(len(roles),
+		progressbar.OptionEnableColorCodes(true),
+		progressbar.OptionShowCount(),
+		progressbar.OptionSetDescription("[cyan]Fetching role usage data...[reset]"),
+		progressbar.OptionSetTheme(progressbar.Theme{
+			Saucer:        "[green]=[reset]",
+			SaucerHead:    "[green]>[reset]",
+			SaucerPadding: " ",
+			BarStart:      "[",
+			BarEnd:        "]",
+		}),
+		progressbar.OptionOnCompletion(func() {
+			fmt.Fprintf(os.Stderr, "\n")
+		}),
+	)
+
+	// Use worker pool pattern for better efficiency
 	type roleResult struct {
 		index    int
 		lastUsed *time.Time
 		err      error
 	}
 
-	// Use a semaphore to limit concurrency
+	// Define our channels
 	const maxConcurrency = 10
-	sem := make(chan struct{}, maxConcurrency)
+	jobs := make(chan int, len(roles))
 	results := make(chan roleResult, len(roles))
 
-	for i := range roles {
-		go func(i int) {
-			sem <- struct{}{} // Acquire semaphore
-			defer func() {
-				<-sem // Release semaphore
-			}()
+	// Create a cancellable context
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-			lastUsed, err := c.GetRoleLastUsed(ctx, roles[i].Name)
-			results <- roleResult{
-				index:    i,
-				lastUsed: lastUsed,
-				err:      err,
+	// Create worker pool
+	var wg sync.WaitGroup
+	for w := 0; w < maxConcurrency; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			for i := range jobs {
+				// Check for cancellation
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					// Continue processing
+				}
+
+				lastUsed, err := c.GetRoleLastUsed(ctx, roles[i].Name)
+				select {
+				case <-ctx.Done():
+					return
+				case results <- roleResult{
+					index:    i,
+					lastUsed: lastUsed,
+					err:      err,
+				}:
+					// Result sent
+				}
 			}
-		}(i)
+		}()
 	}
 
-	// Collect results
-	errorChan := make(chan error, 1)
-	done := make(chan struct{})
+	// Send jobs to the workers
+	for i := range roles {
+		jobs <- i
+	}
+	close(jobs) // No more jobs to send
 
+	// Process results in a separate goroutine
+	done := make(chan struct{})
 	go func() {
+		defer close(done)
 		for i := 0; i < len(roles); i++ {
 			result := <-results
 			if result.err != nil {
-				select {
-				case errorChan <- result.err:
-					// Error sent
-				default:
-					// Another error was already sent, ignore this one
-				}
-				continue
+				// Log the error but continue processing other roles
+				fmt.Fprintf(os.Stderr, "Warning: Failed to get last used info for role %s: %v\n", roles[result.index].Name, result.err)
+				// Continue processing - don't cancel everything for one role's error
+				roles[result.index].LastUsed = nil
+			} else {
+				roles[result.index].LastUsed = result.lastUsed
 			}
-			roles[result.index].LastUsed = result.lastUsed
+			if err := bar.Add(1); err != nil {
+				// Log the error but continue processing
+				fmt.Fprintf(os.Stderr, "Failed to update progress bar: %v\n", err)
+			}
 		}
-		close(done)
 	}()
 
-	select {
-	case err := <-errorChan:
-		return nil, err
-	case <-done:
-		// All results processed successfully
-	}
+	// Wait for workers to finish
+	go func() {
+		wg.Wait()
+		// Close results channel after all workers are done
+		close(results)
+	}()
 
+	// Wait for either completion or error
+	<-done
 	return roles, nil
 }
 
