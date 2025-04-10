@@ -14,7 +14,6 @@ var (
 	region  string
 
 	// Command-specific flags
-	days        int
 	dryRun      bool
 	force       bool
 	output      string
@@ -45,12 +44,13 @@ Complete documentation is available at https://github.com/yourusername/hawkling`
 	commands.AddCommonFlags(rootCmd, &profile, &region)
 
 	// List command
+	var listDays int
 	listCmd := &cobra.Command{
 		Use:   "list",
 		Short: "List IAM roles, optionally filtering for unused roles",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			listOptions := commands.ListOptions{
-				Days:       days,
+				Days:       listDays,
 				Output:     output,
 				ShowAll:    showAllInfo,
 				OnlyUsed:   onlyUsed,
@@ -61,7 +61,7 @@ Complete documentation is available at https://github.com/yourusername/hawkling`
 			return listCmd.Execute(context.Background())
 		},
 	}
-	commands.AddFilterFlags(listCmd, &days, &onlyUsed, &onlyUnused)
+	commands.AddFilterFlags(listCmd, &listDays, &onlyUsed, &onlyUnused)
 	commands.AddOutputFlags(listCmd, &output, &showAllInfo)
 
 	// Delete command
@@ -83,12 +83,13 @@ Complete documentation is available at https://github.com/yourusername/hawkling`
 	commands.AddDeletionFlags(deleteCmd, &dryRun, &force)
 
 	// Prune command
+	var pruneDays int
 	pruneCmd := &cobra.Command{
 		Use:   "prune",
 		Short: "Delete all unused IAM roles",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			pruneOptions := commands.PruneOptions{
-				Days:   days,
+				Days:   pruneDays,
 				DryRun: dryRun,
 				Force:  force,
 			}
@@ -97,7 +98,7 @@ Complete documentation is available at https://github.com/yourusername/hawkling`
 			return pruneCmd.Execute(context.Background())
 		},
 	}
-	commands.AddPruneFlags(pruneCmd, &days, &dryRun, &force)
+	commands.AddPruneFlags(pruneCmd, &pruneDays, &dryRun, &force)
 
 	// Demo command
 	demoCmd := &cobra.Command{
