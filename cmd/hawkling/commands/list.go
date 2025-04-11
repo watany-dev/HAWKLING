@@ -54,6 +54,11 @@ func (c *ListCommand) Execute(ctx context.Context) error {
 	if c.options.OnlyUsed && c.options.OnlyUnused {
 		roles = filteredRoles
 	} else {
+		var threshold time.Time
+		if c.options.Days > 0 {
+			threshold = time.Now().AddDate(0, 0, -c.options.Days)
+		}
+
 		filteredRoles = make([]aws.Role, 0, len(roles))
 
 		// Apply filters
@@ -70,9 +75,7 @@ func (c *ListCommand) Execute(ctx context.Context) error {
 
 			// Days フィルター: 指定された日数以内に使用されていない場合は除外
 			if c.options.Days > 0 && role.LastUsed != nil {
-				threshold := time.Now().AddDate(0, 0, -c.options.Days)
-				isUnusedForDays := role.LastUsed.Before(threshold)
-				if !isUnusedForDays {
+				if !role.LastUsed.Before(threshold) {
 					continue
 				}
 			}

@@ -12,7 +12,7 @@ func AddCommonFlags(cmd *cobra.Command, profile *string, region *string) {
 
 // AddFilterFlags adds filtering flags to a command
 func AddFilterFlags(cmd *cobra.Command, days *int, onlyUsed *bool, onlyUnused *bool) {
-	cmd.Flags().IntVarP(days, "days", "d", 90, "Number of days to consider for usage")
+	cmd.Flags().IntVarP(days, "days", "d", 0, "Number of days to consider for usage")
 	cmd.Flags().BoolVar(onlyUsed, "used", false, "Show only used roles")
 	cmd.Flags().BoolVar(onlyUnused, "unused", false, "Show only unused roles")
 }

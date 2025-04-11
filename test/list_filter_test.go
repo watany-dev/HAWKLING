@@ -7,7 +7,10 @@ import (
 	"hawkling/pkg/aws"
 )
 
-// timePtr is defined in mock_iamclient.go
+// Local timePtr for tests
+func localTimePtr(t time.Time) *time.Time {
+	return &t
+}
 
 func TestFilterRoles(t *testing.T) {
 	now := time.Now()
@@ -18,14 +21,14 @@ func TestFilterRoles(t *testing.T) {
 			Name:        "ActiveRole",
 			Arn:         "arn:aws:iam::123456789012:role/ActiveRole",
 			CreateDate:  now.AddDate(-1, 0, 0),
-			LastUsed:    timePtr(now.AddDate(0, 0, -5)), // Used 5 days ago
+			LastUsed:    localTimePtr(now.AddDate(0, 0, -5)), // Used 5 days ago
 			Description: "Recently used role",
 		},
 		{
 			Name:        "InactiveRole",
 			Arn:         "arn:aws:iam::123456789012:role/InactiveRole",
 			CreateDate:  now.AddDate(-2, 0, 0),
-			LastUsed:    timePtr(now.AddDate(0, 0, -100)), // Used 100 days ago
+			LastUsed:    localTimePtr(now.AddDate(0, 0, -100)), // Used 100 days ago
 			Description: "Role unused for a long time",
 		},
 		{
@@ -111,6 +114,12 @@ func TestFilterRoles(t *testing.T) {
 			if test.onlyUsed && test.onlyUnused {
 				// Leave filteredRoles empty
 			} else {
+				// 閾値計算をループの外に移動
+				var threshold time.Time
+				if test.days > 0 {
+					threshold = time.Now().AddDate(0, 0, -test.days)
+				}
+
 				filteredRoles = make([]aws.Role, 0, len(roles))
 
 				for _, role := range roles {
@@ -126,7 +135,6 @@ func TestFilterRoles(t *testing.T) {
 
 					// Days フィルター: 指定された日数以内に使用されていない場合は除外
 					if test.days > 0 && role.LastUsed != nil {
-						threshold := time.Now().AddDate(0, 0, -test.days)
 						if !role.LastUsed.Before(threshold) {
 							continue
 						}
