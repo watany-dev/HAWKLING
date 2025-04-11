@@ -12,7 +12,7 @@ GOTEST = $(GOCMD) test
 GOVET = $(GOCMD) vet
 GOMOD = $(GOCMD) mod
 GOFMT = $(GOCMD) fmt
-GOLINT = golangci-lint
+GOLINT = $(GOCMD) tool golangci-lint
 GOTIDY = $(GOMOD) tidy
 
 # Targets
