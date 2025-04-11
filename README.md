@@ -13,10 +13,9 @@ Hawkling is a command-line tool for managing AWS IAM roles, with a focus on iden
 
 ## Installation
 
-### Using Go
-
 ```bash
-go install github.com/yourusername/hawkling/cmd/hawkling@latest
+curl -fsSL https://raw.githubusercontent.com/watany-dev/hawkling/main/install.sh | sh
+hawkling -h
 ```
 
 ### From Source
