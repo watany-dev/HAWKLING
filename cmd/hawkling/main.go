@@ -101,7 +101,7 @@ Complete documentation is available at https://github.com/watany-dev/hawkling`,
 	commands.AddPruneFlags(pruneCmd, &pruneDays, &dryRun, &force)
 
 	// Add commands to root command
-	rootCmd.AddCommand(listCmd,deleteCmd, pruneCmd)
+	rootCmd.AddCommand(listCmd, deleteCmd, pruneCmd)
 
 	return rootCmd
 }

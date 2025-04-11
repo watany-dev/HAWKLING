@@ -47,14 +47,27 @@ func (c *ListCommand) Execute(ctx context.Context) error {
 	}
 
 	// Filter roles if needed
-	if c.options.OnlyUsed || c.options.OnlyUnused {
-		var filteredRoles []aws.Role
-		for _, role := range roles {
-			isUnused := role.IsUnused(c.options.Days)
+	var filteredRoles []aws.Role
 
-			if (c.options.OnlyUsed && !isUnused) || (c.options.OnlyUnused && isUnused) {
-				filteredRoles = append(filteredRoles, role)
+	// If both filters are enabled, return empty list (logical conflict)
+	if c.options.OnlyUsed && c.options.OnlyUnused {
+		roles = filteredRoles
+	} else {
+		filteredRoles = make([]aws.Role, 0, len(roles))
+
+		// Apply filters
+		for _, role := range roles {
+			isUnusedForDays := role.IsUnused(c.options.Days)
+
+			if c.options.OnlyUsed && (role.LastUsed == nil || isUnusedForDays) {
+				continue
 			}
+
+			if c.options.OnlyUnused && !isUnusedForDays {
+				continue
+			}
+
+			filteredRoles = append(filteredRoles, role)
 		}
 		roles = filteredRoles
 	}
