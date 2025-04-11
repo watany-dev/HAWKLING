@@ -63,17 +63,17 @@ func (c *ListCommand) Execute(ctx context.Context) error {
 
 		// Apply filters
 		for _, role := range roles {
-			// OnlyUsed: 一度も使用されていないロール (LastUsed == nil) を除外
+			// OnlyUsed: exclude roles that have never been used (LastUsed == nil)
 			if c.options.OnlyUsed && role.LastUsed == nil {
 				continue
 			}
 
-			// OnlyUnused: 一度でも使用されたロール (LastUsed != nil) を除外
+			// OnlyUnused: exclude roles that have been used at least once (LastUsed != nil)
 			if c.options.OnlyUnused && role.LastUsed != nil {
 				continue
 			}
 
-			// Days フィルター: 指定された日数以内に使用されていない場合は除外
+			// Days filter: exclude roles that have been used within the specified days
 			if c.options.Days > 0 && role.LastUsed != nil {
 				if !role.LastUsed.Before(threshold) {
 					continue

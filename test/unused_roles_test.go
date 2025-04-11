@@ -78,12 +78,12 @@ func TestFilteringLogic(t *testing.T) {
 			for _, role := range roles {
 				isUnusedForDays := role.IsUnused(test.options.Days)
 
-				// OnlyUsed: LastUsed != nil（使用されている）のロールだけを表示し、かつ指定日数内に使用されている
+				// OnlyUsed: Show only roles that have been used (LastUsed != nil) and were used within the specified days
 				if test.options.OnlyUsed && (role.LastUsed == nil || isUnusedForDays) {
 					continue
 				}
 
-				// OnlyUnused: 指定日数間使用されていないロールだけを表示
+				// OnlyUnused: Show only roles that have not been used within the specified days
 				if test.options.OnlyUnused && !isUnusedForDays {
 					continue
 				}

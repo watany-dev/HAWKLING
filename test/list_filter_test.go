@@ -114,7 +114,7 @@ func TestFilterRoles(t *testing.T) {
 			if test.onlyUsed && test.onlyUnused {
 				// Leave filteredRoles empty
 			} else {
-				// 閾値計算をループの外に移動
+				// Move threshold calculation outside the loop
 				var threshold time.Time
 				if test.days > 0 {
 					threshold = time.Now().AddDate(0, 0, -test.days)
@@ -123,17 +123,17 @@ func TestFilterRoles(t *testing.T) {
 				filteredRoles = make([]aws.Role, 0, len(roles))
 
 				for _, role := range roles {
-					// OnlyUsed: 一度も使用されていないロール (LastUsed == nil) を除外
+					// OnlyUsed: Exclude roles that have never been used (LastUsed == nil)
 					if test.onlyUsed && role.LastUsed == nil {
 						continue
 					}
 
-					// OnlyUnused: 一度でも使用されたロール (LastUsed != nil) を除外
+					// OnlyUnused: Exclude roles that have been used at least once (LastUsed != nil)
 					if test.onlyUnused && role.LastUsed != nil {
 						continue
 					}
 
-					// Days フィルター: 指定された日数以内に使用されていない場合は除外
+					// Days filter: Exclude roles that have not been used within the specified days
 					if test.days > 0 && role.LastUsed != nil {
 						if !role.LastUsed.Before(threshold) {
 							continue
