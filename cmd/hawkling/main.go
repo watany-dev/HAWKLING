@@ -84,14 +84,16 @@ Complete documentation is available at https://github.com/watany-dev/hawkling`,
 
 	// Prune command
 	var pruneDays int
+	var pruneOnlyUnused bool
 	pruneCmd := &cobra.Command{
 		Use:   "prune",
-		Short: "Delete all unused IAM roles",
+		Short: "Delete IAM roles based on specified criteria",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			pruneOptions := commands.PruneOptions{
-				Days:   pruneDays,
-				DryRun: dryRun,
-				Force:  force,
+				Days:       pruneDays,
+				DryRun:     dryRun,
+				Force:      force,
+				OnlyUnused: pruneOnlyUnused,
 			}
 
 			pruneCmd := commands.NewPruneCommand(profile, region, pruneOptions)
@@ -99,6 +101,7 @@ Complete documentation is available at https://github.com/watany-dev/hawkling`,
 		},
 	}
 	commands.AddPruneFlags(pruneCmd, &pruneDays, &dryRun, &force)
+	pruneCmd.Flags().BoolVar(&pruneOnlyUnused, "unused", false, "Delete only unused roles")
 
 	// Add commands to root command
 	rootCmd.AddCommand(listCmd, deleteCmd, pruneCmd)

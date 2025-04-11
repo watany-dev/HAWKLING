@@ -1,11 +1,8 @@
 package commands
 
 import (
-	"bufio"
 	"context"
 	"fmt"
-	"os"
-	"strings"
 
 	"hawkling/pkg/aws"
 	"hawkling/pkg/errors"
@@ -68,16 +65,13 @@ func (c *DeleteCommand) Execute(ctx context.Context) error {
 
 	// Confirm deletion if force flag is not set
 	if !c.options.Force {
-		fmt.Printf("Are you sure you want to delete role '%s'? This cannot be undone. [y/N]: ", c.roleName)
-
-		reader := bufio.NewReader(os.Stdin)
-		response, err := reader.ReadString('\n')
+		prompt := fmt.Sprintf("Are you sure you want to delete role '%s'? This cannot be undone. [y/N]: ", c.roleName)
+		confirmed, err := ConfirmAction(prompt)
 		if err != nil {
 			return errors.Wrap(err, "failed to read confirmation")
 		}
 
-		response = strings.TrimSpace(strings.ToLower(response))
-		if response != "y" && response != "yes" {
+		if !confirmed {
 			fmt.Println("Deletion cancelled")
 			return nil
 		}

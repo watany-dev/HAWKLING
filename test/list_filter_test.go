@@ -107,42 +107,14 @@ func TestFilterRoles(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			// Apply filter
-			var filteredRoles []aws.Role
-
-			// If both filters are enabled, return empty list (logical conflict)
-			if test.onlyUsed && test.onlyUnused {
-				// Leave filteredRoles empty
-			} else {
-				// Move threshold calculation outside the loop
-				var threshold time.Time
-				if test.days > 0 {
-					threshold = time.Now().AddDate(0, 0, -test.days)
-				}
-
-				filteredRoles = make([]aws.Role, 0, len(roles))
-
-				for _, role := range roles {
-					// OnlyUsed: Exclude roles that have never been used (LastUsed == nil)
-					if test.onlyUsed && role.LastUsed == nil {
-						continue
-					}
-
-					// OnlyUnused: Exclude roles that have been used at least once (LastUsed != nil)
-					if test.onlyUnused && role.LastUsed != nil {
-						continue
-					}
-
-					// Days filter: Exclude roles that have not been used within the specified days
-					if test.days > 0 && role.LastUsed != nil {
-						if !role.LastUsed.Before(threshold) {
-							continue
-						}
-					}
-
-					filteredRoles = append(filteredRoles, role)
-				}
+			// Apply filter using unified filtering logic
+			filterOptions := aws.FilterOptions{
+				Days:       test.days,
+				OnlyUsed:   test.onlyUsed,
+				OnlyUnused: test.onlyUnused,
 			}
+
+			filteredRoles := aws.FilterRoles(roles, filterOptions)
 
 			// Check if filtered roles match expected
 			if len(filteredRoles) != len(test.expectedRoles) {

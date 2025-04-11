@@ -3,7 +3,6 @@ package commands
 import (
 	"context"
 	"strings"
-	"time"
 
 	"hawkling/pkg/aws"
 	"hawkling/pkg/errors"
@@ -48,42 +47,14 @@ func (c *ListCommand) Execute(ctx context.Context) error {
 	}
 
 	// Filter roles if needed
-	var filteredRoles []aws.Role
-
-	// If both filters are enabled, return empty list (logical conflict)
-	if c.options.OnlyUsed && c.options.OnlyUnused {
-		roles = filteredRoles
-	} else {
-		var threshold time.Time
-		if c.options.Days > 0 {
-			threshold = time.Now().AddDate(0, 0, -c.options.Days)
-		}
-
-		filteredRoles = make([]aws.Role, 0, len(roles))
-
-		// Apply filters
-		for _, role := range roles {
-			// OnlyUsed: exclude roles that have never been used (LastUsed == nil)
-			if c.options.OnlyUsed && role.LastUsed == nil {
-				continue
-			}
-
-			// OnlyUnused: exclude roles that have been used at least once (LastUsed != nil)
-			if c.options.OnlyUnused && role.LastUsed != nil {
-				continue
-			}
-
-			// Days filter: exclude roles that have been used within the specified days
-			if c.options.Days > 0 && role.LastUsed != nil {
-				if !role.LastUsed.Before(threshold) {
-					continue
-				}
-			}
-
-			filteredRoles = append(filteredRoles, role)
-		}
-		roles = filteredRoles
+	filterOptions := aws.FilterOptions{
+		Days:       c.options.Days,
+		OnlyUsed:   c.options.OnlyUsed,
+		OnlyUnused: c.options.OnlyUnused,
 	}
+
+	// Use unified filter implementation
+	roles = aws.FilterRoles(roles, filterOptions)
 
 	// Format output
 	format := formatter.Format(strings.ToLower(c.options.Output))

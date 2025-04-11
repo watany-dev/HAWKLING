@@ -1,10 +1,8 @@
 package commands
 
 import (
-	"bufio"
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"hawkling/pkg/aws"
@@ -48,12 +46,12 @@ func (c *PruneCommand) Execute(ctx context.Context) error {
 	}
 
 	// Find unused roles based on the specified days
-	var unusedRoles []aws.Role
-	for _, role := range roles {
-		if role.IsUnused(c.options.Days) {
-			unusedRoles = append(unusedRoles, role)
-		}
+	filterOptions := aws.FilterOptions{
+		Days:       c.options.Days,
+		OnlyUnused: true,
 	}
+
+	unusedRoles := aws.FilterRoles(roles, filterOptions)
 
 	if len(unusedRoles) == 0 {
 		fmt.Println("No unused IAM roles found")
@@ -74,16 +72,13 @@ func (c *PruneCommand) Execute(ctx context.Context) error {
 
 	// Confirm deletion if force flag is not set
 	if !c.options.Force {
-		fmt.Printf("\nAre you sure you want to delete %d unused roles? This cannot be undone. [y/N]: ", len(unusedRoles))
-
-		reader := bufio.NewReader(os.Stdin)
-		response, err := reader.ReadString('\n')
+		prompt := fmt.Sprintf("\nAre you sure you want to delete %d unused roles? This cannot be undone. [y/N]: ", len(unusedRoles))
+		confirmed, err := ConfirmAction(prompt)
 		if err != nil {
 			return errors.Wrap(err, "failed to read confirmation")
 		}
 
-		response = strings.TrimSpace(strings.ToLower(response))
-		if response != "y" && response != "yes" {
+		if !confirmed {
 			fmt.Println("Deletion cancelled")
 			return nil
 		}
