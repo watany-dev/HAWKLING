@@ -85,6 +85,7 @@ Complete documentation is available at https://github.com/watany-dev/hawkling`,
 	// Prune command
 	var pruneDays int
 	var pruneOnlyUnused bool
+	var pruneOnlyUsed bool
 	pruneCmd := &cobra.Command{
 		Use:   "prune",
 		Short: "Delete IAM roles based on specified criteria",
@@ -94,6 +95,7 @@ Complete documentation is available at https://github.com/watany-dev/hawkling`,
 				DryRun:     dryRun,
 				Force:      force,
 				OnlyUnused: pruneOnlyUnused,
+				OnlyUsed:   pruneOnlyUsed,
 			}
 
 			pruneCmd := commands.NewPruneCommand(profile, region, pruneOptions)
@@ -102,6 +104,7 @@ Complete documentation is available at https://github.com/watany-dev/hawkling`,
 	}
 	commands.AddPruneFlags(pruneCmd, &pruneDays, &dryRun, &force)
 	pruneCmd.Flags().BoolVar(&pruneOnlyUnused, "unused", false, "Delete only unused roles")
+	pruneCmd.Flags().BoolVar(&pruneOnlyUsed, "used", false, "Delete only used roles")
 
 	// Add commands to root command
 	rootCmd.AddCommand(listCmd, deleteCmd, pruneCmd)

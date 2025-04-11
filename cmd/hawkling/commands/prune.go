@@ -11,9 +11,11 @@ import (
 
 // PruneOptions contains options for the prune command
 type PruneOptions struct {
-	Days   int
-	DryRun bool
-	Force  bool
+	Days       int
+	DryRun     bool
+	Force      bool
+	OnlyUnused bool
+	OnlyUsed   bool
 }
 
 // PruneCommand represents the prune command
@@ -45,22 +47,39 @@ func (c *PruneCommand) Execute(ctx context.Context) error {
 		return errors.Wrap(err, "failed to list roles")
 	}
 
-	// Find unused roles based on the specified days
+	// Find roles based on the specified options
 	filterOptions := aws.FilterOptions{
 		Days:       c.options.Days,
-		OnlyUnused: true,
+		OnlyUnused: c.options.OnlyUnused,
+		OnlyUsed:   c.options.OnlyUsed,
 	}
 
-	unusedRoles := aws.FilterRoles(roles, filterOptions)
+	filteredRoles := aws.FilterRoles(roles, filterOptions)
 
-	if len(unusedRoles) == 0 {
-		fmt.Println("No unused IAM roles found")
+	if len(filteredRoles) == 0 {
+		fmt.Println("No IAM roles found matching criteria")
 		return nil
 	}
 
-	// Show unused roles
-	fmt.Printf("Found %d unused IAM roles (not used in the last %d days):\n", len(unusedRoles), c.options.Days)
-	for i, role := range unusedRoles {
+	// Show filtered roles
+	message := "Found %d IAM roles"
+	if c.options.OnlyUnused {
+		message = "Found %d unused IAM roles (not used in the last %d days)"
+	} else if c.options.OnlyUsed {
+		message = "Found %d used IAM roles"
+		if c.options.Days > 0 {
+			message += " (not used in the last %d days)"
+		}
+	} else if c.options.Days > 0 {
+		message = "Found %d IAM roles (not used in the last %d days)"
+	}
+
+	if strings.Contains(message, "%d days") {
+		fmt.Printf(message+":\n", len(filteredRoles), c.options.Days)
+	} else {
+		fmt.Printf(message+":\n", len(filteredRoles))
+	}
+	for i, role := range filteredRoles {
 		fmt.Printf("%d. %s\n", i+1, role.Name)
 	}
 
@@ -72,7 +91,7 @@ func (c *PruneCommand) Execute(ctx context.Context) error {
 
 	// Confirm deletion if force flag is not set
 	if !c.options.Force {
-		prompt := fmt.Sprintf("\nAre you sure you want to delete %d unused roles? This cannot be undone. [y/N]: ", len(unusedRoles))
+		prompt := fmt.Sprintf("\nAre you sure you want to delete %d roles? This cannot be undone. [y/N]: ", len(filteredRoles))
 		confirmed, err := ConfirmAction(prompt)
 		if err != nil {
 			return errors.Wrap(err, "failed to read confirmation")
@@ -84,9 +103,9 @@ func (c *PruneCommand) Execute(ctx context.Context) error {
 		}
 	}
 
-	// Delete the unused roles
+	// Delete the filtered roles
 	var failedRoles []string
-	for _, role := range unusedRoles {
+	for _, role := range filteredRoles {
 		if err := client.DeleteRole(ctx, role.Name); err != nil {
 			failedRoles = append(failedRoles, role.Name)
 			fmt.Printf("Failed to delete role %s: %v\n", role.Name, err)
@@ -100,6 +119,6 @@ func (c *PruneCommand) Execute(ctx context.Context) error {
 		return errors.Errorf("failed to delete %d roles", len(failedRoles))
 	}
 
-	fmt.Printf("\nSuccessfully deleted %d unused IAM roles\n", len(unusedRoles))
+	fmt.Printf("\nSuccessfully deleted %d IAM roles\n", len(filteredRoles))
 	return nil
 }
