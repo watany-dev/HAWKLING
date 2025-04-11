@@ -46,38 +46,59 @@ func TestFilterRoles(t *testing.T) {
 	}{
 		{
 			name:          "No filters - should return all roles",
-			days:          90,
+			days:          0,
 			onlyUsed:      false,
 			onlyUnused:    false,
 			expectedRoles: []string{"ActiveRole", "InactiveRole", "NeverUsedRole"},
 		},
 		{
-			name:          "Used filter with 90 days - should return only used roles",
-			days:          90,
+			name:          "Used filter - should return only roles that were used at least once",
+			days:          0,
 			onlyUsed:      true,
 			onlyUnused:    false,
-			expectedRoles: []string{"ActiveRole"},
+			expectedRoles: []string{"ActiveRole", "InactiveRole"},
 		},
 		{
-			name:          "Unused filter with 90 days - should return only unused roles",
-			days:          90,
+			name:          "Unused filter - should return only roles that were never used",
+			days:          0,
 			onlyUsed:      false,
 			onlyUnused:    true,
-			expectedRoles: []string{"InactiveRole", "NeverUsedRole"},
+			expectedRoles: []string{"NeverUsedRole"},
 		},
 		{
 			name:          "Both filters - should return no roles (conflicting filters)",
-			days:          90,
+			days:          0,
 			onlyUsed:      true,
 			onlyUnused:    true,
 			expectedRoles: []string{},
 		},
 		{
-			name:          "Days filter - 3 days threshold should return different results",
+			name:          "Days filter with 90 days - should return roles not used in 90 days",
+			days:          90,
+			onlyUsed:      false,
+			onlyUnused:    false,
+			expectedRoles: []string{"InactiveRole", "NeverUsedRole"},
+		},
+		{
+			name:          "Days filter with 3 days - should return roles not used in 3 days",
 			days:          3,
 			onlyUsed:      false,
-			onlyUnused:    true,
+			onlyUnused:    false,
 			expectedRoles: []string{"ActiveRole", "InactiveRole", "NeverUsedRole"},
+		},
+		{
+			name:          "Days filter with Used filter - should return used roles not used in 90 days",
+			days:          90,
+			onlyUsed:      true,
+			onlyUnused:    false,
+			expectedRoles: []string{"InactiveRole"},
+		},
+		{
+			name:          "Days filter with Unused filter - should return never used roles",
+			days:          90,
+			onlyUsed:      false,
+			onlyUnused:    true,
+			expectedRoles: []string{"NeverUsedRole"},
 		},
 	}
 
@@ -89,21 +110,37 @@ func TestFilterRoles(t *testing.T) {
 			// If both filters are enabled, return empty list (logical conflict)
 			if test.onlyUsed && test.onlyUnused {
 				// Leave filteredRoles empty
-			} else if test.onlyUsed || test.onlyUnused {
-				for _, role := range roles {
-					isUnused := role.IsUnused(test.days)
-
-					if (test.onlyUsed && !isUnused) || (test.onlyUnused && isUnused) {
-						filteredRoles = append(filteredRoles, role)
-					}
-				}
 			} else {
-				filteredRoles = roles
+				filteredRoles = make([]aws.Role, 0, len(roles))
+
+				for _, role := range roles {
+					// OnlyUsed: 一度も使用されていないロール (LastUsed == nil) を除外
+					if test.onlyUsed && role.LastUsed == nil {
+						continue
+					}
+
+					// OnlyUnused: 一度でも使用されたロール (LastUsed != nil) を除外
+					if test.onlyUnused && role.LastUsed != nil {
+						continue
+					}
+
+					// Days フィルター: 指定された日数以内に使用されていない場合は除外
+					if test.days > 0 && role.LastUsed != nil {
+						threshold := time.Now().AddDate(0, 0, -test.days)
+						if !role.LastUsed.Before(threshold) {
+							continue
+						}
+					}
+
+					filteredRoles = append(filteredRoles, role)
+				}
 			}
 
 			// Check if filtered roles match expected
 			if len(filteredRoles) != len(test.expectedRoles) {
 				t.Errorf("Expected %d roles, got %d", len(test.expectedRoles), len(filteredRoles))
+				t.Logf("Expected: %v", test.expectedRoles)
+				t.Logf("Got: %v", getRoleNames(filteredRoles))
 			}
 
 			// Check if each expected role is in the filtered roles
@@ -121,4 +158,12 @@ func TestFilterRoles(t *testing.T) {
 			}
 		})
 	}
+}
+
+func getRoleNames(roles []aws.Role) []string {
+	names := make([]string, len(roles))
+	for i, role := range roles {
+		names[i] = role.Name
+	}
+	return names
 }

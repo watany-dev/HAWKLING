@@ -46,7 +46,7 @@ func TestListCommandFilterFlags(t *testing.T) {
 		{
 			name: "No filters - should return all roles",
 			options: commands.ListOptions{
-				Days:       90,
+				Days:       0,
 				Output:     "table",
 				ShowAll:    false,
 				OnlyUsed:   false,
@@ -57,35 +57,35 @@ func TestListCommandFilterFlags(t *testing.T) {
 			shouldNotContain: []string{},
 		},
 		{
-			name: "Used filter - should return only used roles",
+			name: "Used filter - should return only roles that were used at least once",
 			options: commands.ListOptions{
-				Days:       90,
+				Days:       0,
 				Output:     "table",
 				ShowAll:    false,
 				OnlyUsed:   true,
 				OnlyUnused: false,
 			},
-			expectedRoles:    1, // Only ActiveRole was used in the last 90 days
-			shouldContain:    []string{"ActiveRole"},
-			shouldNotContain: []string{"InactiveRole", "NeverUsedRole"},
+			expectedRoles:    2, // ActiveRole and InactiveRole have been used
+			shouldContain:    []string{"ActiveRole", "InactiveRole"},
+			shouldNotContain: []string{"NeverUsedRole"},
 		},
 		{
-			name: "Unused filter - should return only unused roles",
+			name: "Unused filter - should return only roles that were never used",
 			options: commands.ListOptions{
-				Days:       90,
+				Days:       0,
 				Output:     "table",
 				ShowAll:    false,
 				OnlyUsed:   false,
 				OnlyUnused: true,
 			},
-			expectedRoles:    2, // InactiveRole and NeverUsedRole are unused
-			shouldContain:    []string{"InactiveRole", "NeverUsedRole"},
-			shouldNotContain: []string{"ActiveRole"},
+			expectedRoles:    1, // Only NeverUsedRole was never used
+			shouldContain:    []string{"NeverUsedRole"},
+			shouldNotContain: []string{"ActiveRole", "InactiveRole"},
 		},
 		{
 			name: "Both filters - should return no roles (conflicting filters)",
 			options: commands.ListOptions{
-				Days:       90,
+				Days:       0,
 				Output:     "table",
 				ShowAll:    false,
 				OnlyUsed:   true,
@@ -96,17 +96,43 @@ func TestListCommandFilterFlags(t *testing.T) {
 			shouldNotContain: []string{"ActiveRole", "InactiveRole", "NeverUsedRole"},
 		},
 		{
-			name: "Days filter - 3 days threshold should return different results",
+			name: "Days filter with 90 days - should return roles not used in 90 days",
 			options: commands.ListOptions{
-				Days:       3,
+				Days:       90,
+				Output:     "table",
+				ShowAll:    false,
+				OnlyUsed:   false,
+				OnlyUnused: false,
+			},
+			expectedRoles:    2, // InactiveRole was used 100 days ago, NeverUsedRole was never used
+			shouldContain:    []string{"InactiveRole", "NeverUsedRole"},
+			shouldNotContain: []string{"ActiveRole"},
+		},
+		{
+			name: "Days filter with Used filter - should return used roles not used in 90 days",
+			options: commands.ListOptions{
+				Days:       90,
+				Output:     "table",
+				ShowAll:    false,
+				OnlyUsed:   true,
+				OnlyUnused: false,
+			},
+			expectedRoles:    1, // Only InactiveRole was used but not in last 90 days
+			shouldContain:    []string{"InactiveRole"},
+			shouldNotContain: []string{"ActiveRole", "NeverUsedRole"},
+		},
+		{
+			name: "Days filter with Unused filter - should return never used roles",
+			options: commands.ListOptions{
+				Days:       90,
 				Output:     "table",
 				ShowAll:    false,
 				OnlyUsed:   false,
 				OnlyUnused: true,
 			},
-			expectedRoles:    3,                                                       // All should be unused with 3 day threshold (ActiveRole was used 5 days ago)
-			shouldContain:    []string{"ActiveRole", "InactiveRole", "NeverUsedRole"}, // ActiveRole should be considered unused with 3 day threshold
-			shouldNotContain: []string{},
+			expectedRoles:    1, // Only NeverUsedRole was never used
+			shouldContain:    []string{"NeverUsedRole"},
+			shouldNotContain: []string{"ActiveRole", "InactiveRole"},
 		},
 	}
 

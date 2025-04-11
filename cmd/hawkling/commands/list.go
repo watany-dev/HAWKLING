@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"strings"
+	"time"
 
 	"hawkling/pkg/aws"
 	"hawkling/pkg/errors"
@@ -57,14 +58,23 @@ func (c *ListCommand) Execute(ctx context.Context) error {
 
 		// Apply filters
 		for _, role := range roles {
-			isUnusedForDays := role.IsUnused(c.options.Days)
-
-			if c.options.OnlyUsed && (role.LastUsed == nil || isUnusedForDays) {
+			// OnlyUsed: 一度も使用されていないロール (LastUsed == nil) を除外
+			if c.options.OnlyUsed && role.LastUsed == nil {
 				continue
 			}
 
-			if c.options.OnlyUnused && !isUnusedForDays {
+			// OnlyUnused: 一度でも使用されたロール (LastUsed != nil) を除外
+			if c.options.OnlyUnused && role.LastUsed != nil {
 				continue
+			}
+
+			// Days フィルター: 指定された日数以内に使用されていない場合は除外
+			if c.options.Days > 0 && role.LastUsed != nil {
+				threshold := time.Now().AddDate(0, 0, -c.options.Days)
+				isUnusedForDays := role.LastUsed.Before(threshold)
+				if !isUnusedForDays {
+					continue
+				}
 			}
 
 			filteredRoles = append(filteredRoles, role)
