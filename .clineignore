@@ -25,6 +25,5 @@ go.work.sum
 .env
 
 # tmp
-hawkling
 issue.txt
 dist
