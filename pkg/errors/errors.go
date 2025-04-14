@@ -2,6 +2,16 @@ package errors
 
 import "fmt"
 
+// Wrap wraps an error with a message
+func Wrap(err error, message string) error {
+	return fmt.Errorf("%s: %w", message, err)
+}
+
+// Errorf formats an error message
+func Errorf(format string, args ...interface{}) error {
+	return fmt.Errorf(format, args...)
+}
+
 // WrapRoleError wraps an error with a role operation context
 func WrapRoleError(op string, roleName string, err error) error {
 	return fmt.Errorf("failed to %s role %s: %w", op, roleName, err)

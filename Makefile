@@ -25,7 +25,7 @@ build: build-release
 build-dev:
 	go build -o build/hawkling-dev ./cmd/hawkling
 
-# リリースビルド（サイズ最適化）
+# Release build (size optimization)
 build-release:
 	CGO_ENABLED=0 go build -ldflags="-s -w" -o build/hawkling ./cmd/hawkling
 

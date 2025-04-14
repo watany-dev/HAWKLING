@@ -13,13 +13,31 @@ import (
 	"github.com/schollz/progressbar/v3"
 )
 
+// For testing
+var testClient IAMClient
+
+// SetTestClient sets a test client for unit testing
+func SetTestClient(client IAMClient) {
+	testClient = client
+}
+
+// ClearTestClient clears the test client after tests
+func ClearTestClient() {
+	testClient = nil
+}
+
 // AWSclient implements the IAMClient interface
 type AWSClient struct {
 	iamClient *iam.Client
 }
 
 // NewAWSClient creates a new AWS client with the specified profile and region
-func NewAWSClient(ctx context.Context, profile, region string) (*AWSClient, error) {
+func NewAWSClient(ctx context.Context, profile, region string) (IAMClient, error) {
+	// If we're in test mode, return the test client
+	if testClient != nil {
+		return testClient, nil
+	}
+
 	var cfg aws.Config
 	var err error
 

@@ -1,8 +1,36 @@
 package commands
 
 import (
+	"bufio"
+	"fmt"
+	"os"
+	"strings"
+
 	"github.com/spf13/cobra"
+
+	"hawkling/pkg/errors"
 )
+
+// FilterOptions contains common filtering options used across commands
+type FilterOptions struct {
+	Days       int
+	OnlyUsed   bool
+	OnlyUnused bool
+}
+
+// ConfirmAction prompts the user for confirmation and returns their response
+func ConfirmAction(prompt string) (bool, error) {
+	fmt.Print(prompt)
+
+	reader := bufio.NewReader(os.Stdin)
+	response, err := reader.ReadString('\n')
+	if err != nil {
+		return false, errors.Wrap(err, "failed to read confirmation")
+	}
+
+	response = strings.TrimSpace(strings.ToLower(response))
+	return response == "y" || response == "yes", nil
+}
 
 // AddCommonFlags adds common flags to a command
 func AddCommonFlags(cmd *cobra.Command, profile *string, region *string) {
@@ -12,7 +40,7 @@ func AddCommonFlags(cmd *cobra.Command, profile *string, region *string) {
 
 // AddFilterFlags adds filtering flags to a command
 func AddFilterFlags(cmd *cobra.Command, days *int, onlyUsed *bool, onlyUnused *bool) {
-	cmd.Flags().IntVarP(days, "days", "d", 90, "Number of days to consider for usage")
+	cmd.Flags().IntVarP(days, "days", "d", 0, "Number of days to consider for usage")
 	cmd.Flags().BoolVar(onlyUsed, "used", false, "Show only used roles")
 	cmd.Flags().BoolVar(onlyUnused, "unused", false, "Show only unused roles")
 }
