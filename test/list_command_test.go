@@ -46,11 +46,13 @@ func TestListCommandFilterFlags(t *testing.T) {
 		{
 			name: "No filters - should return all roles",
 			options: commands.ListOptions{
-				Days:       0,
-				Output:     "table",
-				ShowAll:    false,
-				OnlyUsed:   false,
-				OnlyUnused: false,
+				FilterOptions: commands.FilterOptions{
+					Days:       0,
+					OnlyUsed:   false,
+					OnlyUnused: false,
+				},
+				Output:  "table",
+				ShowAll: false,
 			},
 			expectedRoles:    3, // All 3 roles from the mock
 			shouldContain:    []string{"ActiveRole", "InactiveRole", "NeverUsedRole"},
@@ -59,11 +61,13 @@ func TestListCommandFilterFlags(t *testing.T) {
 		{
 			name: "Used filter - should return only roles that were used at least once",
 			options: commands.ListOptions{
-				Days:       0,
-				Output:     "table",
-				ShowAll:    false,
-				OnlyUsed:   true,
-				OnlyUnused: false,
+				FilterOptions: commands.FilterOptions{
+					Days:       0,
+					OnlyUsed:   true,
+					OnlyUnused: false,
+				},
+				Output:  "table",
+				ShowAll: false,
 			},
 			expectedRoles:    2, // ActiveRole and InactiveRole have been used
 			shouldContain:    []string{"ActiveRole", "InactiveRole"},
@@ -72,11 +76,13 @@ func TestListCommandFilterFlags(t *testing.T) {
 		{
 			name: "Unused filter - should return only roles that were never used",
 			options: commands.ListOptions{
-				Days:       0,
-				Output:     "table",
-				ShowAll:    false,
-				OnlyUsed:   false,
-				OnlyUnused: true,
+				FilterOptions: commands.FilterOptions{
+					Days:       0,
+					OnlyUsed:   false,
+					OnlyUnused: true,
+				},
+				Output:  "table",
+				ShowAll: false,
 			},
 			expectedRoles:    1, // Only NeverUsedRole was never used
 			shouldContain:    []string{"NeverUsedRole"},
@@ -85,11 +91,13 @@ func TestListCommandFilterFlags(t *testing.T) {
 		{
 			name: "Both filters - should return no roles (conflicting filters)",
 			options: commands.ListOptions{
-				Days:       0,
-				Output:     "table",
-				ShowAll:    false,
-				OnlyUsed:   true,
-				OnlyUnused: true,
+				FilterOptions: commands.FilterOptions{
+					Days:       0,
+					OnlyUsed:   true,
+					OnlyUnused: true,
+				},
+				Output:  "table",
+				ShowAll: false,
 			},
 			expectedRoles:    0, // No roles match both used and unused
 			shouldContain:    []string{},
@@ -98,11 +106,13 @@ func TestListCommandFilterFlags(t *testing.T) {
 		{
 			name: "Days filter with 90 days - should return roles not used in 90 days",
 			options: commands.ListOptions{
-				Days:       90,
-				Output:     "table",
-				ShowAll:    false,
-				OnlyUsed:   false,
-				OnlyUnused: false,
+				FilterOptions: commands.FilterOptions{
+					Days:       90,
+					OnlyUsed:   false,
+					OnlyUnused: false,
+				},
+				Output:  "table",
+				ShowAll: false,
 			},
 			expectedRoles:    2, // InactiveRole was used 100 days ago, NeverUsedRole was never used
 			shouldContain:    []string{"InactiveRole", "NeverUsedRole"},
@@ -111,11 +121,13 @@ func TestListCommandFilterFlags(t *testing.T) {
 		{
 			name: "Days filter with Used filter - should return used roles not used in 90 days",
 			options: commands.ListOptions{
-				Days:       90,
-				Output:     "table",
-				ShowAll:    false,
-				OnlyUsed:   true,
-				OnlyUnused: false,
+				FilterOptions: commands.FilterOptions{
+					Days:       90,
+					OnlyUsed:   true,
+					OnlyUnused: false,
+				},
+				Output:  "table",
+				ShowAll: false,
 			},
 			expectedRoles:    1, // Only InactiveRole was used but not in last 90 days
 			shouldContain:    []string{"InactiveRole"},
@@ -124,11 +136,13 @@ func TestListCommandFilterFlags(t *testing.T) {
 		{
 			name: "Days filter with Unused filter - should return never used roles",
 			options: commands.ListOptions{
-				Days:       90,
-				Output:     "table",
-				ShowAll:    false,
-				OnlyUsed:   false,
-				OnlyUnused: true,
+				FilterOptions: commands.FilterOptions{
+					Days:       90,
+					OnlyUsed:   false,
+					OnlyUnused: true,
+				},
+				Output:  "table",
+				ShowAll: false,
 			},
 			expectedRoles:    1, // Only NeverUsedRole was never used
 			shouldContain:    []string{"NeverUsedRole"},

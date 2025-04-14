@@ -21,9 +21,11 @@ func TestFilteringLogic(t *testing.T) {
 		{
 			name: "No filtering",
 			options: commands.ListOptions{
-				Days:       0, // Changed from 90 to 0 - no days filter
-				OnlyUsed:   false,
-				OnlyUnused: false,
+				FilterOptions: commands.FilterOptions{
+					Days:       0, // Changed from 90 to 0 - no days filter
+					OnlyUsed:   false,
+					OnlyUnused: false,
+				},
 			},
 			expectedCount: 3,
 			expectedRoles: []string{"ActiveRole", "InactiveRole", "NeverUsedRole"},
@@ -31,9 +33,11 @@ func TestFilteringLogic(t *testing.T) {
 		{
 			name: "Only used roles - no days",
 			options: commands.ListOptions{
-				Days:       0,
-				OnlyUsed:   true,
-				OnlyUnused: false,
+				FilterOptions: commands.FilterOptions{
+					Days:       0,
+					OnlyUsed:   true,
+					OnlyUnused: false,
+				},
 			},
 			expectedCount: 2,
 			expectedRoles: []string{"ActiveRole", "InactiveRole"},
@@ -41,9 +45,11 @@ func TestFilteringLogic(t *testing.T) {
 		{
 			name: "Only unused roles - no days",
 			options: commands.ListOptions{
-				Days:       0,
-				OnlyUsed:   false,
-				OnlyUnused: true,
+				FilterOptions: commands.FilterOptions{
+					Days:       0,
+					OnlyUsed:   false,
+					OnlyUnused: true,
+				},
 			},
 			expectedCount: 1,
 			expectedRoles: []string{"NeverUsedRole"},
@@ -51,9 +57,11 @@ func TestFilteringLogic(t *testing.T) {
 		{
 			name: "Days filter with 90 days",
 			options: commands.ListOptions{
-				Days:       90,
-				OnlyUsed:   false,
-				OnlyUnused: false,
+				FilterOptions: commands.FilterOptions{
+					Days:       90,
+					OnlyUsed:   false,
+					OnlyUnused: false,
+				},
 			},
 			expectedCount: 2,
 			expectedRoles: []string{"InactiveRole", "NeverUsedRole"},
@@ -61,9 +69,11 @@ func TestFilteringLogic(t *testing.T) {
 		{
 			name: "Days filter with 3 days",
 			options: commands.ListOptions{
-				Days:       3,
-				OnlyUsed:   false,
-				OnlyUnused: false,
+				FilterOptions: commands.FilterOptions{
+					Days:       3,
+					OnlyUsed:   false,
+					OnlyUnused: false,
+				},
 			},
 			expectedCount: 3,
 			expectedRoles: []string{"ActiveRole", "InactiveRole", "NeverUsedRole"},
@@ -71,9 +81,11 @@ func TestFilteringLogic(t *testing.T) {
 		{
 			name: "Days filter with Used filter - 90 days",
 			options: commands.ListOptions{
-				Days:       90,
-				OnlyUsed:   true,
-				OnlyUnused: false,
+				FilterOptions: commands.FilterOptions{
+					Days:       90,
+					OnlyUsed:   true,
+					OnlyUnused: false,
+				},
 			},
 			expectedCount: 1,
 			expectedRoles: []string{"InactiveRole"},
@@ -81,9 +93,11 @@ func TestFilteringLogic(t *testing.T) {
 		{
 			name: "Days filter with Unused filter",
 			options: commands.ListOptions{
-				Days:       90,
-				OnlyUsed:   false,
-				OnlyUnused: true,
+				FilterOptions: commands.FilterOptions{
+					Days:       90,
+					OnlyUsed:   false,
+					OnlyUnused: true,
+				},
 			},
 			expectedCount: 1,
 			expectedRoles: []string{"NeverUsedRole"},
@@ -94,9 +108,9 @@ func TestFilteringLogic(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			// Apply filter using common filtering logic
 			filterOptions := aws.FilterOptions{
-				Days:       test.options.Days,
-				OnlyUsed:   test.options.OnlyUsed,
-				OnlyUnused: test.options.OnlyUnused,
+				Days:       test.options.FilterOptions.Days,
+				OnlyUsed:   test.options.FilterOptions.OnlyUsed,
+				OnlyUnused: test.options.FilterOptions.OnlyUnused,
 			}
 
 			filteredRoles := aws.FilterRoles(roles, filterOptions)

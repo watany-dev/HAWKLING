@@ -11,6 +11,13 @@ import (
 	"hawkling/pkg/errors"
 )
 
+// FilterOptions contains common filtering options used across commands
+type FilterOptions struct {
+	Days       int
+	OnlyUsed   bool
+	OnlyUnused bool
+}
+
 // ConfirmAction prompts the user for confirmation and returns their response
 func ConfirmAction(prompt string) (bool, error) {
 	fmt.Print(prompt)

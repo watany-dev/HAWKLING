@@ -11,11 +11,9 @@ import (
 
 // ListOptions contains options for the list command
 type ListOptions struct {
-	Days       int
-	Output     string
-	ShowAll    bool
-	OnlyUsed   bool
-	OnlyUnused bool
+	FilterOptions
+	Output  string
+	ShowAll bool
 }
 
 // ListCommand represents the list command
@@ -48,9 +46,9 @@ func (c *ListCommand) Execute(ctx context.Context) error {
 
 	// Filter roles if needed
 	filterOptions := aws.FilterOptions{
-		Days:       c.options.Days,
-		OnlyUsed:   c.options.OnlyUsed,
-		OnlyUnused: c.options.OnlyUnused,
+		Days:       c.options.FilterOptions.Days,
+		OnlyUsed:   c.options.FilterOptions.OnlyUsed,
+		OnlyUnused: c.options.FilterOptions.OnlyUnused,
 	}
 
 	// Use unified filter implementation

@@ -11,11 +11,9 @@ import (
 
 // PruneOptions contains options for the prune command
 type PruneOptions struct {
-	Days       int
-	DryRun     bool
-	Force      bool
-	OnlyUnused bool
-	OnlyUsed   bool
+	FilterOptions
+	DryRun bool
+	Force  bool
 }
 
 // PruneCommand represents the prune command
@@ -49,9 +47,9 @@ func (c *PruneCommand) Execute(ctx context.Context) error {
 
 	// Find roles based on the specified options
 	filterOptions := aws.FilterOptions{
-		Days:       c.options.Days,
-		OnlyUnused: c.options.OnlyUnused,
-		OnlyUsed:   c.options.OnlyUsed,
+		Days:       c.options.FilterOptions.Days,
+		OnlyUnused: c.options.FilterOptions.OnlyUnused,
+		OnlyUsed:   c.options.FilterOptions.OnlyUsed,
 	}
 
 	filteredRoles := aws.FilterRoles(roles, filterOptions)
@@ -63,19 +61,19 @@ func (c *PruneCommand) Execute(ctx context.Context) error {
 
 	// Show filtered roles
 	message := "Found %d IAM roles"
-	if c.options.OnlyUnused {
+	if c.options.FilterOptions.OnlyUnused {
 		message = "Found %d unused IAM roles (not used in the last %d days)"
-	} else if c.options.OnlyUsed {
+	} else if c.options.FilterOptions.OnlyUsed {
 		message = "Found %d used IAM roles"
-		if c.options.Days > 0 {
+		if c.options.FilterOptions.Days > 0 {
 			message += " (not used in the last %d days)"
 		}
-	} else if c.options.Days > 0 {
+	} else if c.options.FilterOptions.Days > 0 {
 		message = "Found %d IAM roles (not used in the last %d days)"
 	}
 
 	if strings.Contains(message, "%d days") {
-		fmt.Printf(message+":\n", len(filteredRoles), c.options.Days)
+		fmt.Printf(message+":\n", len(filteredRoles), c.options.FilterOptions.Days)
 	} else {
 		fmt.Printf(message+":\n", len(filteredRoles))
 	}
